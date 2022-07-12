@@ -72,9 +72,17 @@ exports.createBook = async function (req, res) {
         if (!isValid(subcategory)) {
             return res.status(400).send({ status: false, message: "subcategory cannot be empty" })
         }
-        if (!nRegex.test(subcategory)) {
-            return res.status(400).send({ status: false, message: "subcatgory contains invalid character" })
-        }
+        if (!(/[A-Za-z][A-Za-z0-9_]{1,29}/.test(subcategory))) {
+            //category validation
+            res
+              .status(400)
+              .send({ status: false, message: `subcategory  can not be empty` });
+            return;
+          }
+      
+        // if (!nRegex.test(subcategory)) {
+        //     return res.status(400).send({ status: false, message: "subcatgory contains invalid character" })
+        // }
         if (!isValid(releasedAt)) {
             return res.status(400).send({ status: false, message: "releasedAt cannot be empty" })
         }
@@ -189,7 +197,7 @@ exports.deleteBooks = async function (req, res) {
         res.status(200).send({ status: true, message: "Success",data:deleteBook })
     }
     catch (err) {
-
+        
         res.status(500).send({ message: err.message })
     }
 }

@@ -100,7 +100,7 @@ exports.reviewValidation = async function (req, res, next) {
         }
         const { reviewedBy, rating } = data
 
-        if (!(/^[A-Za-z ]{1,15}$/.test(reviewedBy))) return res.status(400).send({ status: false, msg: "reiviewedBy can't be blank or invalid😵‍💫😵‍💫" })
+        if (!(/^[A-Za-z ]{0,15}$/.test(reviewedBy))) return res.status(400).send({ status: false, msg: "reiviewedBy can't be blank or invalid😵‍💫😵‍💫" })
         if (!(/^[1-5]{1,1}$/.test(rating))) return res.status(400).send({ status: false, msg: "enter valid ratings🤷‍♂️🤷‍♂️" })
         next();
         /************************End Review Validation****************************/
@@ -114,6 +114,9 @@ exports.putReviewValidation = async function (req, res, next) {
     try {
         let updateReviewData = req.body
         let { review, rating, reviewedBy } = updateReviewData
+        if(reviewedBy==""){return res.status(400).send({ status: false, msg: `reviewed should not be empty` }) }
+        if(review==""){return res.status(400).send({ status: false, msg: `review should not be empty` }) }
+       
         if (review) {
 
             if (!isValidString(review)) { return res.status(400).send({ status: false, msg: `${review} review should be only string formate` }) }
@@ -125,9 +128,10 @@ exports.putReviewValidation = async function (req, res, next) {
         }
         if (reviewedBy) {
 
-            if (!isValidString(reviewedBy)) { return res.status(400).send({ status: false, msg: `${reviewedBy} reviever name should be only string formate` }) }
-            next();
+            if (!isValidString(reviewedBy)) { return res.status(400).send({ status: false, msg: `${reviewedBy} reviever name should be in correct format` }) }
         }
+        next();
+
         /************************End Put Review Validation****************************/
     } catch (Error) {
         res.status(500).send({ status: false, msg: Error.message })
