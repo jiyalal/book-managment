@@ -15,12 +15,12 @@ router.post("/books",auth.Authenticate,bookController.createBook)
 router.get("/books",auth.Authenticate,bookController.getBook)
 router.get("/books/:bookId",auth.Authenticate,bookController.getBookById)
 router.delete("/books/:bookId",auth.Authenticate,auth.Authorization,bookController.deleteBooks)
+router.put('/books/:bookId',auth.Authenticate,auth.Authorization,bookController.updateBooks)
 
 
 /*********************Review ROUTER**********************/
 router.post("/books/:bookId/review", validator.reviewValidation, reviewController.createReview)
 router.delete('/books/:bookId/review/:reviewId', reviewController.deleteReview)
-router.put('/books/:bookId',bookController.updateBooks)
 router.put("/books/:bookId/review/:reviewId",validator.putReviewValidation,reviewController.UpdateRiew)
 
 router.all("/**", function (req, res) {

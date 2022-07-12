@@ -19,7 +19,7 @@ exports.Authenticate = function (req, res, next) {
             const decodedToken = jwt.verify(token, "GroupNo-27",
 
                 function (err, token) {
-                    if (err){return res.status(401).send({status: false, msg: "invalid toke"})
+                    if (err){return res.status(401).send({status: false, msg: "invalid token"})
                         } 
                         req.loggedInUserId = token.id
                         next()
@@ -45,7 +45,7 @@ exports.Authorization = async function (req, res, next) {
         if (!ObjectId.isValid(bookId)) return res.status(400).send({ status: false, msg: 'please put a valid ObjectId' })
         let findBook = await bookModel.findOne({ _id: bookId }).select({ userId: 1, _id: 0 })
         let verifyId = findBook.userId.toString()
-        console.log(verifyId)
+        // console.log(verifyId)
         if (loggedInUserId !== verifyId) return res.status(403).send({ status: false, msg: "the user is unauthorized" })
 
         next();
