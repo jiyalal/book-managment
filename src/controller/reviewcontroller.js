@@ -7,7 +7,7 @@ const ObjectId = mongoose.Types.ObjectId
 /**************************************Start's Create Review Api's😍😊****************************************/
 exports.createReview = async function (req, res) {
     try {
-        const { reviewedBy, review, rating } = req.body
+        let { reviewedBy, review, rating } = req.body
 
         let bookId = req.params.bookId.trim()
 
@@ -20,7 +20,7 @@ exports.createReview = async function (req, res) {
         let details = {}
 
         details.bookId = bookId.trim()
-
+        if(!reviewedBy.trim()) reviewedBy = 'Guest'
         details.reviewedBy = reviewedBy.trim()
 
         details.review = review.trim()
@@ -58,7 +58,7 @@ exports.deleteReview = async function (req, res) {
 
         if (!findBook) return res.status(404).send({ status: false, msg: "no such book exist🤷‍♂️🤷‍♂️" })
 
-        let findreview = await reviewModel.findOneAndUpdate({ bookId: bookId, _id: reviewId }, { $set: { isDeleted: true } }, { new: true })
+        let findreview = await reviewModel.findOneAndUpdate({ bookId: bookId, _id: reviewId ,isDeleted:false}, { $set: { isDeleted: true } }, { new: true })
 
         if (!findreview) return res.status(404).send({ status: false, msg: 'no such review exist😥😥' })
 

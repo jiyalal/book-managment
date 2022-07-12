@@ -11,7 +11,7 @@ router.post("/register", validator.userValidation, userController.createUser)
 router.post('/login', userController.loginUser)
 
 /************BOOK ROUTER👍************/
-router.post("/books",bookController.createBook)
+router.post("/books",auth.Authenticate,bookController.createBook)
 router.get("/books",auth.Authenticate,bookController.getBook)
 router.get("/books/:bookId",auth.Authenticate,bookController.getBookById)
 router.delete("/books/:bookId",auth.Authenticate,auth.Authorization,bookController.deleteBooks)

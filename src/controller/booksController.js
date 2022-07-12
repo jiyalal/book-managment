@@ -2,6 +2,8 @@ const bookModel = require("../models/booksModel")
 const reviewModel = require('../models/reviewModel')
 const userModel = require('../models/userModel')
 const mongoose = require("mongoose")
+const moment = require("moment")
+
 const ObjectId = mongoose.Types.ObjectId
 
 
@@ -11,112 +13,85 @@ const ObjectId = mongoose.Types.ObjectId
 //     if (typeof value !== "string" || value.trim().length === 0) return false
 //     return true
 // }
-const isValidString = function (value) {
-    if (typeof value === 'string' && value.trim().length === 0) return false
-    if (!(/^[A-Za-z-._,@& ]+$/.test(value))) {
-        return false
-    }
+// const isValidString = function (value) {
+//     if (typeof value === 'string' && value.trim().length === 0) return false
+//     if (!(/^[A-Za-z-._,@&]+$/.test(value))) {
+//         return false
+//     }
+//     return true;
+// }
+const isValid = (str) => {
+    if (str === undefined || str == null) return false;
+    if (typeof str == "string" && str.trim().length == 0) return false;
     return true;
 }
-
+const rexIsbn = /^[1-9][0-9]{9,14}$/
+const nRegex = /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$/
+const dateMatch = /^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/
 exports.createBook = async function (req, res) {
     try {
-        const bookData = req.body
-
-        const fieldAllowed = ["title", "excerpt", "userId", "ISBN", "category", "subcategory", "releasedAt"]
-
-        const keyOf = Object.keys(bookData);
-
-        const receivedKey = fieldAllowed.filter((x) => !keyOf.includes(x));
-
-        if (receivedKey.length) {
-
-            return res.status(400).send({ status: "false", msg: `${receivedKey} field is missing` });
-
+  
+        let { title, excerpt, userId, ISBN, category, subcategory, releasedAt } = req.body
+        if (!isValid(title)) {
+            return res.status(400).send({ status: false, msg: "Title    cannot be empty" })
+        }
+        const foundTitle = await bookModel.findOne({ title })
+        if (foundTitle) {
+            return res.status(400).send({ status: false, msg: "This title is alreay being used" })
+        }
+        if (!isValid(excerpt)) {
+            return res.status(400).send({ status: false, msg: "excerpt cannot be empty" })
+        }
+        if (!isValid(userId)) {
+            return res.status(400).send({ status: false, msg: "userId cannot be empty" })
+        }
+        if (!mongoose.isValidObjectId(userId))  {
+            return res.status(400).send({ status: false, msg: "Invalid userId" })
         }
 
-        const { title, excerpt, userId, ISBN, category, subcategory, releasedAt } = bookData
-        /**********************************Start's title validation********************************/
-
-        // if (!isvalid(title)) return res.status(400).send({ status: false, msg: `${title} is not valid title please enter valid title` })
-
-        if (!isValidString(title)) {return res.status(400).send({ status: false, msg: `${title} is not valid title` })}
-
-        const isDupliCateTitle = await bookModel.findOne({ title: title })
-
-        if (isDupliCateTitle) { return res.status(400).send({ status: false, msg: "title is already present in our DataBase" }) }
-        /**********************************End title validation********************************/
-
-        /**********************************Start's excerpt validation********************************/
-
-        if (!isvalid(excerpt)) return res.status(400).send({ status: false, msg: `${excerpt} is not valid excerpt` })
-
-
-        /**********************************End excerpt validation********************************/
-
-        /**********************************start's userID validation********************************/
-
-
-        if (!isvalid(userId)) return res.status(400).send({ status: false, msg: `${userId} enter valid userID` })
-
-        let isValidUserID = mongoose.Types.ObjectId.isValid(userId)
-
-        if (!isValidUserID) return res.status(400).send({ status: false, msg: `${userId} userID has something wrong` })
-
-        const isvalidUserId = await userModel.findById(userId)
-
-        if (!isvalidUserId) { return res.status(404).send({ status: false, msg: "User not found" }) }
-
-        /**********************************End userID validation********************************/
-
-        /**********************************Start's ISBN validation********************************/
-
-        if (!isvalid(ISBN)) return res.status(400).send({ status: false, msg: `${ISBN} Is not valid ` })
-
-        if (!(/\d{3}-?\d{10}/.test(ISBN))) return res.status(400).send({ status: false, msg: `${ISBN} ISBN should be 13 digit` })
-
-        const isDupliCateISBN = await bookModel.findOne({ ISBN: ISBN })
-
-        if (isDupliCateISBN) {
-            return res.status(400).send({ status: false, msg: "ISBN is already present in our DataBase" })
-        }
-       
-        
-        if (!/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/.test(releasedAt)) {
-            return res.status(400).send({ status: false, msg: `${releasedAt} is an invalid date, formate should be like this YYYY-MM-DD` })
-        }
-        
-        if(isValidString(category)) return res.status(400).send({status:false,msg:'category must be in valid format'})
-
-        if (!/^[a-zA-Z .',-_]$/.test(subcategory)) return res.status(400).send({ status: false, msg: `${subcategory} is not valid subcategory please enter valid subcategory` })
-
-
-        /**********************************End Category validation********************************/
-
-        /**********************************Start's Subcategory validation********************************/
-        if (typeof subcategory !== "string" || subcategory.trim().length === 0) {
-            if (Array.isArray(subcategory)) {
-
-                for (let i = 0; i < subcategory.length; i++) {
-                    
-                    if (typeof subcategory[i] != 'string') return res.status(400).send({ status: false, msg: " subcategory should be string" })
-                }
-
-            } else { return res.status(400).send({ status: false, msg: "subcategory should be a string" }) }
+        const userFound = await userModel.findOne({ _id: userId })
+        if (!userFound) {
+            return res.status(400).send({ status: false, msg: "User not found" })
         }
 
-       
+        if (!isValid(ISBN)) {
+            return res.status(400).send({ status: false, msg: "ISBN cannot be empty" })
+        }
+        if (!rexIsbn.test(ISBN)) return res.status(400).send({ status: false, msg: "ISBN is invalid use 10 to 15 digit ISBN" })
+        const foundISBN = await bookModel.findOne({ ISBN })
+        if (foundISBN) {
+            return res.status(400).send({ status: false, msg: "This ISBN is already being used" })
+        }
 
-        /**********************************End Subcategory validation********************************/
-        
-        const saved = await bookModel.create(bookData)
+        if (!isValid(category)) {
+            return res.status(400).send({ status: false, msg: "category cannot be empty" })
+        }
+        if (!nRegex.test(category)) {
+            return res.status(400).send({ status: false, msg: "catgory contains invalid character" })
+        }
+        if (!isValid(subcategory)) {
+            return res.status(400).send({ status: false, msg: "subcategory cannot be empty" })
+        }
+        if (!nRegex.test(subcategory)) {
+            return res.status(400).send({ status: false, msg: "subcatgory contains invalid character" })
+        }
+        if (!isValid(releasedAt)) {
+            return res.status(400).send({ status: false, msg: "releasedAt cannot be empty" })
+        }
+        if (!dateMatch.test(releasedAt)) {
+            return res.status(400).send({ status: false, msg: "releasedAt is in invalid format" })
+        }
+        let bookCreated = await bookModel.create({ title, excerpt, userId, ISBN, category, subcategory, releasedAt })
+        if (moment(releasedAt) > moment()) return res.status(400).send({ status: false, msg: "releasedAt cannot be in future" })
+        let noDate = moment().format(releasedAt, "YYYYMMDD")
+        bookCreated = bookCreated.toObject()
+        bookCreated.releasedAt = noDate
+        res.status(201).send({ status: true, message: 'Success', data: bookCreated })
+    } catch (error) {
+        res.status(500).send({ status: false, msg: error.message })
 
-        res.status(201).send({ status: true, data: saved })
     }
-    catch (err) {
 
-        res.status(500).send({ status: false, msg: err.message })
-    }
 }
 
 exports.getBook = async function (req, res) {
