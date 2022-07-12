@@ -209,17 +209,30 @@ exports.updateBooks = async function (req, res) {
             return res.status(404).send(" No such data found ")
         }
         let reqData = req.body;
+       
         let upData = {};
         if (reqData.title) {
+            const foundTitle = await bookModel.findOne({ title:reqData.title })
+            if (foundTitle) {
+                return res.status(400).send({ status: false, msg: "This title is alreay being used" })
+            }
             upData.title = reqData.title;
         }
         if (reqData.excerpt) {
             upData.excerpt = reqData.excerpt;
         }
         if (reqData.ISBN) {
+            if (!rexIsbn.test(reqData.ISBN)) return res.status(400).send({ status: false, msg: "ISBN is invalid use 10 to 15 digit ISBN" })
+            const foundISBN = await bookModel.findOne({ ISBN:reqData.ISBN})
+            if (foundISBN) {
+                return res.status(400).send({ status: false, msg: "This ISBN is already being used" })
+            }
             upData.ISBN = reqData.ISBN;
         }
         if (reqData.releasedAt) {
+            if (!dateMatch.test(reqData.releasedAt)) {
+                return res.status(400).send({ status: false, msg: "releasedAt is in invalid format" })
+            }
             upData.releasedAt = reqData.releasedAt;
         }
 
